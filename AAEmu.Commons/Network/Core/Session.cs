@@ -19,15 +19,25 @@ public interface ISession
 public class Session : TcpSession, ISession
 {
     private readonly Dictionary<string, object> _attributes = [];
-
     public IBaseProtocolHandler ProtocolHandler { get; private set; }
     public IPEndPoint RemoteEndPoint { get; private set; }
     public uint SessionId { get; private set; }
     public IPAddress Ip { get; private set; }
+    public Client Client { get; set; }
 
     public Session(Server server) : base(server)
     {
         ProtocolHandler = server.GetHandler();
+    }
+    
+    
+    public Session(Client client) : base(null)
+    {
+        Client = client;
+        ProtocolHandler?.OnConnect(this);
+        Ip = RemoteEndPoint.Address;
+        SessionId = (uint)RemoteEndPoint.GetHashCode();
+        RemoteEndPoint = (IPEndPoint)Socket.RemoteEndPoint;
     }
 
     protected override void OnConnecting()

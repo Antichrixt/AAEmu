@@ -8,6 +8,7 @@ public class Client : TcpClient, ISession
 {
     private readonly Dictionary<string, object> _attributes = [];
     private BaseProtocolHandler _handler;
+    private Session _session;
     private uint _sessionId;
     private IPAddress _ip;
 
@@ -44,6 +45,8 @@ public class Client : TcpClient, ISession
     public Client(IPAddress serverAddress, int serverPort, BaseProtocolHandler handler) : base(serverAddress, serverPort)
     {
         _handler = handler;
+        _session = new Session(this);
+        
     }
 
     public BaseProtocolHandler GetHandler()
