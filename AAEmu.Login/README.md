@@ -4,6 +4,7 @@
 
 To configure the login you have you can just use a **configuration file** or combine it with **user secrets (preferred)** to hide credentials from files in the repository.
 
+
 The configuration structure is as follows:
 
 ```
