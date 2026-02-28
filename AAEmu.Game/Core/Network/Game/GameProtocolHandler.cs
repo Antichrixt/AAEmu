@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Text;
-
+using AAEmu.Commons.Cryptography;
 using AAEmu.Commons.Exceptions;
 using AAEmu.Commons.Network;
 using AAEmu.Commons.Network.Core;
@@ -171,6 +171,22 @@ public class GameProtocolHandler : BaseProtocolHandler
                         _ = stream2.ReadByte(); // TODO: verify 1.2 crc
                         _ = stream2.ReadByte(); // TODO: verify 1.2 counter
                     }
+                    if (level == 5)
+                    {
+                        //пакет от клиента, дешифруем
+                        //------------------------------
+                        var input = new byte[stream2.Count - 2];
+                        Buffer.BlockCopy(stream2, 2, input, 0, stream2.Count - 2);
+                        var output = EncryptionManager.Instance.Decode(input, connection.Id, connection.AccountId);
+                        var OutBytes = new byte[output.Length + 5];
+                        Buffer.BlockCopy(stream2, 0, OutBytes, 0, 5);
+                        Buffer.BlockCopy(output, 1, OutBytes, 5, output.Length - 1); // сформируем полный расшифрованные пакет
+                        // заменим шифрованные данные на дешифрованные
+                        var strm = new PacketStream();
+                        strm.Write(OutBytes);
+                        stream2.Replace(strm, 0, OutBytes.Length);
+                        stream2.ReadUInt16();
+                    }
 
                     var type = stream2.ReadUInt16();
                     _packets[level].TryGetValue(type, out var classType);
@@ -209,7 +225,9 @@ public class GameProtocolHandler : BaseProtocolHandler
     /// <param name="classType"></param>
     public void RegisterPacket(uint type, byte level, Type classType)
     {
-        _packets[level][type] = classType;
+        if(_packets[level].ContainsKey(type))
+            _packets[level].TryRemove(type, out _);
+        _packets[level].TryAdd(type, classType);
     }
 
     /// <summary>
