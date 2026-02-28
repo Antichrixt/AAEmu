@@ -23,9 +23,12 @@ public class GameProtocolHandler : BaseProtocolHandler
     public GameProtocolHandler()
     {
         _packets = new ConcurrentDictionary<byte, ConcurrentDictionary<uint, Type>>();
-        // For 1.2 client we only have Level1 and Level2 packets
-        _packets.TryAdd(1, new ConcurrentDictionary<uint, Type>());
-        _packets.TryAdd(2, new ConcurrentDictionary<uint, Type>());
+        _packets.TryAdd(1, new ConcurrentDictionary<uint, Type>()); // ordinary
+        _packets.TryAdd(2, new ConcurrentDictionary<uint, Type>()); // proxy
+        _packets.TryAdd(3, new ConcurrentDictionary<uint, Type>()); // deflate
+        _packets.TryAdd(4, new ConcurrentDictionary<uint, Type>()); // deflate
+        _packets.TryAdd(5, new ConcurrentDictionary<uint, Type>()); // encrypt
+        _packets.TryAdd(6, new ConcurrentDictionary<uint, Type>()); // encrypt
     }
 
     /// <summary>
