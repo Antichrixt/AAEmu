@@ -63,7 +63,7 @@ namespace AAEmu.Commons.Cryptography
             return stream;
         }
 
-        public void StoreClientKeys(byte[] aesKeyEncrypted, byte[] xorKeyEncrypted, ulong accountId, ulong connectionId)
+        public void StoreClientKeys(byte[] aesKeyEncrypted, byte[] xorKeyEncrypted, ulong accountId, uint connectionId)
         {
             if (!ConnectionKeys.ContainsKey(accountId))
             {
@@ -73,8 +73,12 @@ namespace AAEmu.Commons.Cryptography
             var keys = ConnectionKeys[accountId];
             var xorConstRaw = keys.RsaKeyPair.Decrypt(xorKeyEncrypted, false);
             var head = BitConverter.ToUInt32(xorConstRaw, 0);
-            _log.Warn("XOR: {0}", head); // <-- этот сырой XOR записываем в поле xorConst from AAEMU моего OpcodeFinder`a
-            head = (head ^ 0x15A0244B) * head ^ 0x70F1F23 & 0xffffffff; // 1.2.0.0 AA 18 march 2015
+            _log.Warn("raw XOR: {0}", head); // <-- этот сырой XOR записываем в поле xorConst from AAEMU моего OpcodeFinder`a
+            //head = (head ^ 0x15A0244B) * head ^ 0x70F1F23 & 0xffffffff; // 1.2.0.0 AA 18 march 2015
+            //head = (head ^ 0x15A02491) * head ^ 0x70F1F23 & 0xffffffff; // 1.7.0.0 AA 23 june 2015
+            //head = (head ^ 0x15A0246F) * head ^ 0x70F1F23 & 0xffffffff; // 1.8.6.2 AA 06 august 2015
+            head = (head ^ 0x15A02442) * head ^ 0x70F1F23 & 0xffffffff; // 2.0.1.7 AA 14 september 2015
+            _log.Warn("key XOR: {0}", head); // настоящий ключ XOR
             keys.XorKey = head * head & 0xffffffff;
             keys.AesKey = keys.RsaKeyPair.Decrypt(aesKeyEncrypted, false);
             keys.RecievedKeys = true;
@@ -222,7 +226,10 @@ namespace AAEmu.Commons.Cryptography
             var msgKey = ((uint)(bodyPacket.Length / 16 - 1) << 4) + (uint)(bodyPacket[2] - 47); // это реальная длина данных в пакете
             var array = new byte[mBodyPacket.Length];
             var mul = msgKey * xorKey; // <-- ставим бряк здесь и смотрим xorKey, packetBody, aesKey, IV для моего OpcodeFinder`a
-            var cry = mul ^ ((uint)MakeSeq(keys) + 0x75A02461) ^ 0xBEB8E892; // 1.2.0.0 AA 18 march 2015
+            //var cry = mul ^ ((uint)MakeSeq(keys) + 0x75A02461) ^ 0xBEB8E892; // 1.2.0.0 AA 18 march 2015
+            //var cry = mul ^ ((uint)MakeSeq(keys) + 0x75A024A7) ^ 0xE4B868D6; // 1.7.0.0 AA 23 june 2015
+            //var cry = mul ^ ((uint)MakeSeq(keys) + 0x75A02485) ^ 0x0FB3A21E; // 1.8.6.2 AA 06 august 2015
+            var cry = mul ^ ((uint)MakeSeq(keys) + 0x75A02458) ^ 0x3458B610; // 2.0.1.7 AA 14 september 2015
             var offset = 4;
             if (seq != 0)
             {
